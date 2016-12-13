@@ -12,6 +12,7 @@ use Drupal\Core\Link;
 use Drupal\Core\Datetime\DateFormatter;
 use Drupal\Core\Session\AccountProxy;
 use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Url;
 
 /**
  * Class ContentLock.
@@ -381,7 +382,7 @@ class ContentLock extends ServiceProviderBase {
       $result = $this->lockingSave($entity_id, $uid, $entity_type);
 
       if ($this->verbose() && !$quiet) {
-        drupal_set_message(t('This content is now locked against simultaneous editing. This content will remain locked if you navigate away from this page without saving it.'), 'status', FALSE);
+        drupal_set_message(t('This content is now locked against simultaneous editing. This content will remain locked if you navigate away from this page without saving or unlocking it.'), 'status', FALSE);
       }
       // Post locking hook.
       $this->moduleHandler->invokeAll('content_lock_locked', [
@@ -403,10 +404,12 @@ class ContentLock extends ServiceProviderBase {
         // Higher permission user can unblock.
         if ($this->currentUser->hasPermission('break content lock')) {
 
+          $destination = \Drupal::destination()->get();
           $link = Link::createFromRoute(
             t('Break lock'),
             'content_lock.break_lock.' . $entity_type,
-            [$entity_type => $entity_id]
+            [$entity_type => $entity_id],
+            ['query' => ['destination' => $destination]]
           )->toString();
 
           // Let user break lock.
@@ -422,7 +425,7 @@ class ContentLock extends ServiceProviderBase {
 
         // Locked by current user.
         if ($this->verbose() && !$quiet) {
-          drupal_set_message(t('This content is now locked by you against simultaneous editing. This content will remain locked if you navigate away from this page without saving it.'), 'status', FALSE);
+          drupal_set_message(t('This content is now locked by you against simultaneous editing. This content will remain locked if you navigate away from this page without saving or unlocking it.'), 'status', FALSE);
         }
 
         // Send success flag.
@@ -461,6 +464,36 @@ class ContentLock extends ServiceProviderBase {
 
     // Always return FALSE.
     return FALSE;
+  }
+
+  /**
+   * Builds a button class, link type form element to unlock the content.
+   *
+   * @param $entity_type
+   *   The entity type of the content.
+   * @param $entity_id
+   *   The entity id of the content.
+   * @param $destination
+   *   The destination query parameter to build the link with.
+   *
+   * @return array
+   *   The link form element.
+   */
+  public function unlockButton($entity_type, $entity_id, $destination) {
+    $unlock_url_options = [];
+    if ($destination) {
+      $unlock_url_options['query'] = ['destination' => $destination];
+    }
+    return [
+      '#type' =>  'link',
+      '#title' => t('Unlock'),
+      '#access' => TRUE,
+      '#attributes' => [
+        'class' => ['button'],
+      ],
+      '#url' => Url::fromRoute('content_lock.break_lock.' . $entity_type, [$entity_type => $entity_id], $unlock_url_options),
+      '#weight' => 200,
+    ];
   }
 
 }

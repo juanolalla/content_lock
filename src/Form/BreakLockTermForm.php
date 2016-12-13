@@ -34,12 +34,6 @@ class BreakLockTermForm extends FormBase {
       '#type' => 'submit',
       '#value' => t('Confirm break lock'),
     ];
-    $input = $form_state->getUserInput();
-    $referrer = (isset($input['referrer']) && !empty($input['referrer'])) ? $input['referrer'] : $_SERVER['HTTP_REFERER'];
-    $form['referrer'] = [
-      '#type' => 'hidden',
-      '#value' => $referrer,
-    ];
     return $form;
   }
 
@@ -51,13 +45,15 @@ class BreakLockTermForm extends FormBase {
     /** @var \Drupal\content_lock\ContentLock\ContentLock $lock_service */
     $lock_service = \Drupal::service('content_lock');
     $lock_service->release($entity_id, NULL, 'taxonomy_term');
-    drupal_set_message($this->t('Lock broken. You can now edit this content.'));
-    if ($referrer = $form_state->getValue('referrer')) {
-      $url = Url::fromUri($referrer);
+    drupal_set_message($this->t('Lock broken. Anyone can now edit this content.'));
+
+    // Redirect URL to the request destination or the canonical taxonomy term view.
+    if ($destination = \Drupal::request()->query->get('destination')) {
+      $url = Url::fromUserInput($destination);
       $form_state->setRedirectUrl($url);
     }
     else {
-      $this->redirect('entity.taxonomy_term.edit_form', array('taxonomy_term' => $entity_id))->send();
+      $this->redirect('entity.taxonomy_term.canonical', array('taxonomy_term' => $entity_id))->send();
     }
   }
 

@@ -34,12 +34,6 @@ class BreakLockNodeForm extends FormBase {
       '#type' => 'submit',
       '#value' => t('Confirm break lock'),
     ];
-    $input = $form_state->getUserInput();
-    $referrer = (isset($input['referrer']) && !empty($input['referrer'])) ? $input['referrer'] : $_SERVER['HTTP_REFERER'];
-    $form['referrer'] = [
-      '#type' => 'hidden',
-      '#value' => $referrer,
-    ];
     return $form;
   }
 
@@ -51,14 +45,15 @@ class BreakLockNodeForm extends FormBase {
     /** @var \Drupal\content_lock\ContentLock\ContentLock $lock_service */
     $lock_service = \Drupal::service('content_lock');
     $lock_service->release($entity_id, NULL, 'node');
-    drupal_set_message($this->t('Lock broken. You can now edit this content.'));
-    if ($referrer = $form_state->getValue('referrer')) {
-      $url = Url::fromUri($referrer);
+    drupal_set_message($this->t('Lock broken. Anyone can now edit this content.'));
+
+    // Redirect URL to the request destination or the canonical node view.
+    if ($destination = \Drupal::request()->query->get('destination')) {
+      $url = Url::fromUserInput($destination);
       $form_state->setRedirectUrl($url);
-      /* return new RedirectResponse($referrer, 303);*/
     }
     else {
-      $this->redirect('entity.node.edit_form', array('node' => $entity_id))->send();
+      $this->redirect('entity.node.canonical', array('node' => $entity_id))->send();
     }
   }
 
