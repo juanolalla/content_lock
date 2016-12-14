@@ -4,7 +4,7 @@ content_lock.break_lock.node:
     _form: Drupal\content_lock\Form\BreakLockNodeForm
     _title: 'Break lock'
   requirements:
-    _permission: 'break content lock'
+    _custom_access: Drupal\content_lock\Form\BreakLockNodeForm::access
   options:
     _admin_route: TRUE
     parameters:
@@ -16,7 +16,7 @@ content_lock.break_lock.taxonomy_term:
     _form: Drupal\content_lock\Form\BreakLockTermForm
     _title: 'Break lock'
   requirements:
-    _permission: 'break content lock'
+    _custom_access: Drupal\content_lock\Form\BreakLockTermForm::access
   options:
     _admin_route: TRUE
     parameters:
@@ -28,7 +28,7 @@ content_lock.break_lock.block_content:
     _form: Drupal\content_lock\Form\BreakLockBlockContentForm
     _title: 'Break lock'
   requirements:
-    _permission: 'break content lock'
+    _custom_access: Drupal\content_lock\Form\BreakLockBlockContentForm::access
   options:
     _admin_route: TRUE
     parameters:

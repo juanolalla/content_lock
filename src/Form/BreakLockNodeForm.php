@@ -2,9 +2,9 @@
 
 namespace Drupal\content_lock\Form;
 
-use Drupal\Core\Form\FormBase;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\node\Entity\Node;
 
 /**
@@ -12,7 +12,7 @@ use Drupal\node\Entity\Node;
  *
  * @package Drupal\content_lock\Form
  */
-class BreakLockNodeForm extends FormBase {
+class BreakLockNodeForm extends BreakLockFormBase {
 
   /**
    * {@inheritdoc}
@@ -41,20 +41,14 @@ class BreakLockNodeForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $entity_id = $form_state->getValue('entity_id');
-    /** @var \Drupal\content_lock\ContentLock\ContentLock $lock_service */
-    $lock_service = \Drupal::service('content_lock');
-    $lock_service->release($entity_id, NULL, 'node');
-    drupal_set_message($this->t('Lock broken. Anyone can now edit this content.'));
+    parent::submitForm($form, $form_state);
+  }
 
-    // Redirect URL to the request destination or the canonical node view.
-    if ($destination = \Drupal::request()->query->get('destination')) {
-      $url = Url::fromUserInput($destination);
-      $form_state->setRedirectUrl($url);
-    }
-    else {
-      $this->redirect('entity.node.canonical', array('node' => $entity_id))->send();
-    }
+  /**
+   * Custom access checker for the form route requirements.
+   */
+  public function access(Node $node, AccountInterface $account) {
+    return $this->accessChecker('node', $node->id(), $account);
   }
 
 }

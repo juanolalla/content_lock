@@ -2,9 +2,8 @@
 
 namespace Drupal\content_lock\Form;
 
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\taxonomy\Entity\Term;
 
 /**
@@ -12,7 +11,11 @@ use Drupal\taxonomy\Entity\Term;
  *
  * @package Drupal\content_lock\Form
  */
-class BreakLockTermForm extends FormBase {
+class BreakLockTermForm extends BreakLockFormBase {
+
+  protected function getEntityType() {
+    return 'taxonomy_term';
+  }
 
   /**
    * {@inheritdoc}
@@ -41,20 +44,14 @@ class BreakLockTermForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $entity_id = $form_state->getValue('entity_id');
-    /** @var \Drupal\content_lock\ContentLock\ContentLock $lock_service */
-    $lock_service = \Drupal::service('content_lock');
-    $lock_service->release($entity_id, NULL, 'taxonomy_term');
-    drupal_set_message($this->t('Lock broken. Anyone can now edit this content.'));
+    parent::submitForm($form, $form_state);
+  }
 
-    // Redirect URL to the request destination or the canonical taxonomy term view.
-    if ($destination = \Drupal::request()->query->get('destination')) {
-      $url = Url::fromUserInput($destination);
-      $form_state->setRedirectUrl($url);
-    }
-    else {
-      $this->redirect('entity.taxonomy_term.canonical', array('taxonomy_term' => $entity_id))->send();
-    }
+  /**
+   * Custom access checker for the form route requirements.
+   */
+  public function access(Term $taxonomy_term, AccountInterface $account) {
+    return $this->accessChecker('taxonomy_term', $taxonomy_term->id(), $account);
   }
 
 }
