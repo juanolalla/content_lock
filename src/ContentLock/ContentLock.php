@@ -201,17 +201,15 @@ class ContentLock extends ServiceProviderBase {
    * @return bool
    *    Return TRUE OR FALSE.
    */
-  protected function stillLocked($uid, $entity_id, $entity_type = 'node') {
+  public function isLockedBy($entity_id, $uid, $entity_type = 'node') {
     /** @var \Drupal\Core\Database\Query\SelectInterface $query */
     $query = $this->database->select('content_lock', 'c')
-      ->countQuery()
+      ->fields('c')
       ->condition('entity_id', $entity_id)
-      ->condition('entity_type', $entity_type)
-      ->condition('uid', $uid);
-    // @todo: test this `execute()` is not allowed.
-    $result = $query->execute();
-
-    return (bool) $result->fetchField();
+      ->condition('uid', $uid)
+      ->condition('entity_type', $entity_type);
+    $num_rows = $query->countQuery()->execute()->fetchField();
+    return (bool) $num_rows;
   }
 
   /**
@@ -284,7 +282,7 @@ class ContentLock extends ServiceProviderBase {
       return;
     }
     foreach ($data as $entity_id => $messsage) {
-      if ($this->stillLocked($user->id(), $entity_id)) {
+      if ($this->isLocked($entity_id, $user->id())) {
         drupal_set_message($messsage, 'warning', FALSE);
       }
     }
