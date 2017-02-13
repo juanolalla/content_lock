@@ -1,0 +1,1 @@
+This repository was created to port the module to Drupal 8 in a big pull request https://github.com/juanolalla/content_lock/pull/1. Since that was merged and further development is happening in drupal.org we are no longer using this repo, and I will delete it soon.
